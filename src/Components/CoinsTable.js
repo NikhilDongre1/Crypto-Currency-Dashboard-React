@@ -19,6 +19,10 @@ import {
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
+export function  numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -31,7 +35,7 @@ const CoinsTable = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const { currency, symbol } = CryptoState();
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const fetchCoins = async () => {
     setLoading(true);
@@ -48,9 +52,6 @@ const CoinsTable = () => {
     fetchCoins();
   }, [currency]);
 
-  const numberWithCommas = (x) => {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
 
   const handleSearch = () => {
     return coins.filter(
@@ -63,7 +64,7 @@ const CoinsTable = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Container sx={{ textAlign: 'center' }}>
+      <Container sx={{ textAlign: 'left' }}>
         <Typography variant="h4" sx={{ margin: 5, fontFamily: 'Montserrat' }}>
           Cryptocurrency Prices by Market Cap
         </Typography>
@@ -106,7 +107,7 @@ const CoinsTable = () => {
                     return (
                       <TableRow
                         key={row.name}
-                        onClick={() => history.push(`/coins/${row.id}`)}
+                        onClick={() => navigate(`/coins/${row.id}`)}
                         style={{ cursor: 'pointer' }}
                       >
                         <TableCell component="th" scope="row">
