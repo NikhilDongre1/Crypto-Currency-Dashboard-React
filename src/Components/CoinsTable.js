@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { CoinList } from '../config api/api';
+ 
+
 import { CryptoState } from '../CryptoContext';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '@mui/material/Pagination';
@@ -30,23 +30,13 @@ const darkTheme = createTheme({
 });
 
 const CoinsTable = () => {
-  const [coins, setCoins] = useState([]);
-  const [loading, setLoading] = useState(false);
+
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { currency, symbol } = CryptoState();
+  const { currency, symbol ,coins,loading,fetchCoins} = CryptoState();
   const navigate = useNavigate();
 
-  const fetchCoins = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(CoinList(currency));
-      setCoins(data);
-    } catch (error) {
-      console.error('Error fetching coins:', error);
-    }
-    setLoading(false);
-  };
+  
 
   useEffect(() => {
     fetchCoins();
