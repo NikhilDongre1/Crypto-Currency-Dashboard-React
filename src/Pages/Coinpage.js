@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ReactHtmlParser from "react-html-parser";
 import CoinInfo from "../Components/CoinInfo";
 import { SingleCoin } from "../config api/api";
 import { numberWithCommas } from "../Components/CoinsTable";
@@ -161,9 +160,12 @@ const CoinPage = () => {
           style={{ marginBottom: 20, maxWidth: "100%" }}
         />
         <Heading variant="h3">{coin?.name}</Heading>
-        <Description variant="subtitle1">
-          {ReactHtmlParser(coin?.description?.en?.split(". ")[0] || "")}.
-        </Description>
+        <Description
+          variant="subtitle1"
+          dangerouslySetInnerHTML={{
+            __html: `${coin?.description?.en?.split(". ")[0] || ""}.`,
+          }}
+        />
         <MarketData>
           <span style={{ display: "flex" }}>
             <Heading variant="h5">Rank:</Heading>
