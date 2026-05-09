@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import AliceCarousel from 'react-alice-carousel';
 import 'react-alice-carousel/lib/alice-carousel.css';
@@ -6,23 +6,34 @@ import { Box, Typography } from '@mui/material';
 import { CryptoState } from '../CryptoContext';
 import { TrendingCoins } from '../config api/api';
 
-export function numberWithCommas(x) {
+export function numberWithCommas(x = 0) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 
 const Carousal = () => {
   const [trending, setTrending] = useState([]);
+  const [error, setError] = useState("");
   const { currency, symbol } = CryptoState();
 
-  const fetchTrendingCoins = async () => {
-    const { data } = await axios.get(TrendingCoins(currency));
-    setTrending(data);
-  };
+  const fetchTrendingCoins = useCallback(async () => {
+    setError("");
+    try {
+      const { data } = await axios.get(TrendingCoins(currency));
+      setTrending(data);
+    } catch (error) {
+      setTrending([]);
+      setError(
+        error.response?.data?.error ||
+          error.message ||
+          "Unable to load trending coins."
+      );
+    }
+  }, [currency]);
 
   useEffect(() => {
     fetchTrendingCoins();
-  }, [currency]);
+  }, [fetchTrendingCoins]);
 
   const items = trending.map((coin) => {
     const profit = coin?.price_change_percentage_24h >= 0;
@@ -49,7 +60,7 @@ const Carousal = () => {
             </span>
           </Typography>
           <Typography variant="body1" sx={{ fontSize: 22, fontWeight: 500 }}>
-            {symbol} {numberWithCommas(coin?.current_price.toFixed(2))}
+            {symbol} {numberWithCommas(coin?.current_price?.toFixed(2) || "0.00")}
           </Typography>
         </a>
       </Box>
@@ -63,17 +74,21 @@ const Carousal = () => {
 
   return (
     <Box sx={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <AliceCarousel
-        mouseTracking
-        infinite
-        autoPlayInterval={1000}
-        animationDuration={1500}
-        disableDotsControls
-        disableButtonsControls
-        responsive={responsive}
-        items={items}
-        autoPlay
-      />
+      {error ? (
+        <Typography variant="body2">{error}</Typography>
+      ) : (
+        <AliceCarousel
+          mouseTracking
+          infinite
+          autoPlayInterval={1000}
+          animationDuration={1500}
+          disableDotsControls
+          disableButtonsControls
+          responsive={responsive}
+          items={items}
+          autoPlay
+        />
+      )}
     </Box>
   );
 };

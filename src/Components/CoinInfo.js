@@ -1,8 +1,8 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HistoricalChart } from "../config api/api";
 import { Line } from "react-chartjs-2"; 
-import Chart from 'chart.js/auto';
+import "chart.js/auto";
 import { CircularProgress, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { styled } from '@mui/system';
 import { CryptoState } from "../CryptoContext";
@@ -15,18 +15,30 @@ const CoinInfo = ({ coin }) => {
   const [days, setDays] = useState(1);
   const { currency } = CryptoState();
   const [flag, setFlag] = useState(false);
+  const [error, setError] = useState("");
 
-  const fetchHistoricData = async () => {
+  const fetchHistoricData = useCallback(async () => {
     if (coin && coin.id) {
-      const { data } = await axios.get(HistoricalChart(coin.id, days, currency));
-      setFlag(true);
-      setHistoricData(data.prices);
+      setError("");
+      try {
+        const { data } = await axios.get(HistoricalChart(coin.id, days, currency));
+        setFlag(true);
+        setHistoricData(data.prices);
+      } catch (error) {
+        setFlag(true);
+        setHistoricData([]);
+        setError(
+          error.response?.data?.error ||
+            error.message ||
+            "Unable to load chart data."
+        );
+      }
     }
-  };
+  }, [coin, currency, days]);
 
   useEffect(() => {
     fetchHistoricData();
-  }, [days, coin]);
+  }, [fetchHistoricData]);
 
   const darkTheme = createTheme({
     palette: {
@@ -57,7 +69,11 @@ const CoinInfo = ({ coin }) => {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <StyledContainer>
-        {!historicData || flag === false ? (
+        {error ? (
+          <div style={{ textAlign: "center", fontFamily: "Montserrat" }}>
+            {error}
+          </div>
+        ) : !historicData || flag === false ? (
           <CircularProgress style={{ color: "gold" }} size={250} thickness={1} />
         ) : (
           <>

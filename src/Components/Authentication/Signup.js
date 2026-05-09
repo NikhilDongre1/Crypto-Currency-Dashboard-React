@@ -9,8 +9,9 @@ const Signup = ({handleClose}) => {
     const[confirmPassword,setConfirmPassword] = useState("");
 
     const handleSubmit = async() => {
-       if(password!=confirmPassword) {
+       if(password !== confirmPassword) {
         alert("Passwords do not match");
+        return;
     }
     try{
         const result = await createUserWithEmailAndPassword(auth, email,password);

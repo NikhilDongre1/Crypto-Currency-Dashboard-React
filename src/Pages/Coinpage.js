@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ReactHtmlParser from "react-html-parser";
 import CoinInfo from "../Components/CoinInfo";
@@ -13,19 +13,30 @@ import { db } from "../firebase";
 const CoinPage = () => {
   const { id } = useParams();
   const [coin, setCoin] = useState();
+  const [error, setError] = useState("");
 
-  const { currency, symbol, user, watchlist,setWatchlist } = CryptoState();
+  const { currency, symbol, user, watchlist } = CryptoState();
 
-  const fetchCoin = async () => {
-    const { data } = await axios.get(SingleCoin(id));
-    setCoin(data);
-  };
+  const fetchCoin = useCallback(async () => {
+    setError("");
+    try {
+      const { data } = await axios.get(SingleCoin(id));
+      setCoin(data);
+    } catch (error) {
+      setCoin(null);
+      setError(
+        error.response?.data?.error ||
+          error.message ||
+          "Unable to load this coin right now."
+      );
+    }
+  }, [id]);
 
   const inWatchlist = watchlist?.includes(coin?.id);
 
   useEffect(() => {
     fetchCoin();
-  }, [id]);
+  }, [fetchCoin]);
 
   const theme = useTheme();
 
@@ -97,6 +108,19 @@ const CoinPage = () => {
     },
   });
 
+  if (error) {
+    return (
+      <div style={{ padding: 30, textAlign: "center" }}>
+        <Typography variant="h6" style={{ marginBottom: 16 }}>
+          {error}
+        </Typography>
+        <Button variant="outlined" onClick={fetchCoin}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   if (!coin) return <LinearProgress style={{ backgroundColor: "gold" }} />;
   const addToWatchlist = async () => {
     const coinRef = doc(db, "watchlist", user.uid);
@@ -138,7 +162,7 @@ const CoinPage = () => {
         />
         <Heading variant="h3">{coin?.name}</Heading>
         <Description variant="subtitle1">
-          {ReactHtmlParser(coin?.description.en.split(". ")[0])}.
+          {ReactHtmlParser(coin?.description?.en?.split(". ")[0] || "")}.
         </Description>
         <MarketData>
           <span style={{ display: "flex" }}>
@@ -160,7 +184,9 @@ const CoinPage = () => {
               style={{ fontFamily: "Montserrat" }}
             >
               {symbol}{" "}
-              {numberWithCommas(coin?.market_data.current_price[currency.toLowerCase()])}
+              {numberWithCommas(
+                coin?.market_data?.current_price?.[currency.toLowerCase()] || 0
+              )}
             </Typography>
           </span>
 
@@ -173,7 +199,9 @@ const CoinPage = () => {
             >
               {symbol}{" "}
               {numberWithCommas(
-                coin?.market_data.market_cap[currency.toLowerCase()].toString().slice(0, -6)
+                (coin?.market_data?.market_cap?.[currency.toLowerCase()] || 0)
+                  .toString()
+                  .slice(0, -6)
               )}
               M
             </Typography>

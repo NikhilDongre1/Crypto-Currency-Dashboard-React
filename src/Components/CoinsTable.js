@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
  
 
 import { CryptoState } from '../CryptoContext';
@@ -10,6 +10,7 @@ import {
   TableContainer,
   TableRow,
   TableCell,
+  Button,
   Container,
   LinearProgress,
   TextField,
@@ -19,7 +20,7 @@ import {
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-export function  numberWithCommas(x) {
+export function  numberWithCommas(x = 0) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
@@ -33,15 +34,8 @@ const CoinsTable = () => {
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { currency, symbol ,coins,loading,fetchCoins} = CryptoState();
+  const { symbol, coins, loading, coinError, fetchCoins } = CryptoState();
   const navigate = useNavigate();
-
-  
-
-  useEffect(() => {
-    fetchCoins();
-  }, [currency]);
-
 
   const handleSearch = () => {
     return coins.filter(
@@ -69,6 +63,15 @@ const CoinsTable = () => {
         <TableContainer>
           {loading ? (
             <LinearProgress style={{ backgroundColor: 'gold' }} />
+          ) : coinError ? (
+            <div style={{ padding: 24, textAlign: "center" }}>
+              <Typography variant="h6" sx={{ marginBottom: 2 }}>
+                {coinError}
+              </Typography>
+              <Button variant="outlined" onClick={fetchCoins}>
+                Retry
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHead>
@@ -108,16 +111,16 @@ const CoinsTable = () => {
                           </div>
                         </TableCell>
                         <TableCell align="right">
-                          {symbol} {numberWithCommas(row.current_price.toFixed(2))}
+                          {symbol} {numberWithCommas(row.current_price?.toFixed(2) || "0.00")}
                         </TableCell>
                         <TableCell
                           align="right"
                           style={{ color: profit ? 'rgb(14, 203, 129)' : 'red', fontWeight: 500 }}
                         >
-                          {profit ? '+' : ''} {row.price_change_percentage_24h.toFixed(2)}%
+                          {profit ? '+' : ''} {row.price_change_percentage_24h?.toFixed(2) || "0.00"}%
                         </TableCell>
                         <TableCell align="right">
-                          {symbol} {numberWithCommas(row.market_cap.toString().slice(0, -6))}M
+                          {symbol} {numberWithCommas((row.market_cap || 0).toString().slice(0, -6))}M
                         </TableCell>
                       </TableRow>
                     );
@@ -127,20 +130,21 @@ const CoinsTable = () => {
           )}
         </TableContainer>
 
-        <Pagination
-          count={(handleSearch()?.length / 10).toFixed(0)}
-          style={{
-            padding: 20,
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-          }}
-         
-          onChange={(_, value) => {
-            setPage(value);
-            window.scroll(0, 450);
-          }}
-        />
+        {!coinError && (
+          <Pagination
+            count={Math.ceil(handleSearch()?.length / 10)}
+            style={{
+              padding: 20,
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+            onChange={(_, value) => {
+              setPage(value);
+              window.scroll(0, 450);
+            }}
+          />
+        )}
      
 
       </Container>
